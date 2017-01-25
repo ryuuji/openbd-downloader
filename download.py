@@ -25,13 +25,13 @@ def get_bibs(items):
     :param items: ISBNのリスト
     :return: 書誌のリスト
     """
-    return requests.post('http://api.openbd.jp/v1/get', data={'isbn': ','.join(items)}).json()
+    return requests.post('https://api.openbd.jp/v1/get', data={'isbn': ','.join(items)}).json()
 
 
 if __name__ == '__main__':
 
     # openBDから収録ISBNの一覧を取得
-    coverage = requests.get('http://api.openbd.jp/v1/coverage').json()
+    coverage = requests.get('https://api.openbd.jp/v1/coverage').json()
 
     # 10000件単位に分割
     chunked_coverage = chunked(coverage, 10000)
