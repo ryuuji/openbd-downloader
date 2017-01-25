@@ -10,6 +10,8 @@ openBDから公開されているすべての情報を取得するサンプル
 import multiprocessing
 import requests
 
+OPENBD_ENDPOINT = 'https://api.openbd.jp/v1/'
+
 
 def chunked(iterable, n):
     """
@@ -19,22 +21,27 @@ def chunked(iterable, n):
     return [iterable[x:x + n] for x in range(0, len(iterable), n)]
 
 
+def get_coverage():
+    """
+    openBDから収録ISBNの一覧を取得
+    :return: ISBNのリスト
+    """
+    return requests.get(OPENBD_ENDPOINT + 'coverage').json()
+
+
 def get_bibs(items):
     """
     openBDからPOSTでデータを取得する
     :param items: ISBNのリスト
     :return: 書誌のリスト
     """
-    return requests.post('https://api.openbd.jp/v1/get', data={'isbn': ','.join(items)}).json()
+    return requests.post(OPENBD_ENDPOINT + 'get', data={'isbn': ','.join(items)}).json()
 
 
 if __name__ == '__main__':
 
-    # openBDから収録ISBNの一覧を取得
-    coverage = requests.get('https://api.openbd.jp/v1/coverage').json()
-
-    # 10000件単位に分割
-    chunked_coverage = chunked(coverage, 10000)
+    # ISBNのリストを10000件単位に分割
+    chunked_coverage = chunked(get_coverage(), 10000)
 
     # 4プロセスの並列でダウンロード
     # マジックナンバー:openBDインフラ的に4接続が最適
@@ -44,7 +51,7 @@ if __name__ == '__main__':
     for result in results:
         for bib in result:
             # ここで書誌1件単位の処理　exp:インデックス化など
-            if bib:
+            if bib and 'summary' in bib:
                 # Coverageにあっても、実データがない場合（Noneが返る）を想定すること
                 # （複数サーバーのデータ同期が遅れる場合があるため）
                 print bib['summary']['isbn']
