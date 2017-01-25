@@ -1,0 +1,2 @@
+# openbd-downloader
+openBDのデータをすべてダウンロードするツール
