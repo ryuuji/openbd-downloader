@@ -37,6 +37,7 @@ if __name__ == '__main__':
     chunked_coverage = chunked(coverage, 10000)
 
     # 4プロセスの並列でダウンロード
+    # マジックナンバー:openBDインフラ的に4接続が最適
     p = multiprocessing.Pool(4)
     results = p.imap_unordered(get_bibs, chunked_coverage)
 
