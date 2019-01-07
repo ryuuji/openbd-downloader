@@ -3,11 +3,12 @@
 
 """
 openBDから公開されているすべての情報を取得するサンプル
-テスト環境 : Python2.7.12
+テスト環境 : Python3.7.1
 依存モジュール : requests (pip install requests)
 """
 
 import multiprocessing
+import time
 import requests
 
 OPENBD_ENDPOINT = 'https://api.openbd.jp/v1/'
@@ -47,11 +48,16 @@ if __name__ == '__main__':
     # マジックナンバー:openBDインフラ的に4接続が最適
     p = multiprocessing.Pool(4)
     results = p.imap_unordered(get_bibs, chunked_coverage)
-
+    cnt = 0
+    start = time.time()
     for result in results:
+        cnt += len(result)
+        print(cnt)
         for bib in result:
             # ここで書誌1件単位の処理　exp:インデックス化など
             if bib and 'summary' in bib:
                 # Coverageにあっても、実データがない場合（Noneが返る）を想定すること
                 # （複数サーバーのデータ同期が遅れる場合があるため）
-                print bib['summary']['isbn']
+                print(bib['summary']['isbn'])
+
+    print(cnt,time.time()-start)
