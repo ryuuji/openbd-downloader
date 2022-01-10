@@ -1,25 +1,14 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
 openBDから公開されているすべての情報を取得するサンプル
-テスト環境 : Python3.7.1
-依存モジュール : requests (pip install requests)
+テスト環境 : Python3.10.1
 """
 
 import multiprocessing
 import time
 import requests
+from more_itertools import chunked
 
 OPENBD_ENDPOINT = 'https://api.openbd.jp/v1/'
-
-
-def chunked(iterable, n):
-    """
-    リストをn個単位のリストに分割する
-    http://cortyuming.hateblo.jp/entry/2015/12/26/091224
-    """
-    return [iterable[x:x + n] for x in range(0, len(iterable), n)]
 
 
 def get_coverage():
@@ -30,7 +19,7 @@ def get_coverage():
     return requests.get(OPENBD_ENDPOINT + 'coverage').json()
 
 
-def get_bibs(items):
+def get_bibs(items: list[str]) -> dict:
     """
     openBDからPOSTでデータを取得する
     :param items: ISBNのリスト
@@ -45,19 +34,20 @@ if __name__ == '__main__':
     chunked_coverage = chunked(get_coverage(), 10000)
 
     # 4プロセスの並列でダウンロード
-    # マジックナンバー:openBDインフラ的に4接続が最適
+    # マジックナンバー: 事後処理の並列性にあわせて調整
     p = multiprocessing.Pool(4)
     results = p.imap_unordered(get_bibs, chunked_coverage)
-    cnt = 0
+    count = 0
     start = time.time()
     for result in results:
-        cnt += len(result)
-        print(cnt)
         for bib in result:
-            # ここで書誌1件単位の処理　exp:インデックス化など
-            if bib and 'summary' in bib:
-                # Coverageにあっても、実データがない場合（Noneが返る）を想定すること
-                # （複数サーバーのデータ同期が遅れる場合があるため）
-                print(bib['summary']['isbn'])
+            # Coverageにあっても、実データがない場合（Noneが返る）を想定する
+            # （複数サーバーのデータ同期が遅れる場合があるため）
+            if bib is None:
+                continue
+            # ここで書誌1件単位の処理
+            count += 1
+            if count % 1000 == 0:
+                print(count, bib['summary']['isbn'], bib['summary']['title'])  # サンプルのタイトルを表示
 
-    print(cnt,time.time()-start)
+    print(count, time.time() - start)
